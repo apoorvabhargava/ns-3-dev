@@ -715,6 +715,7 @@ int
 TcpSocketBase::Close (void)
 {
   NS_LOG_FUNCTION (this);
+  m_tcb->m_cWndCnt = 0;
   /// \internal
   /// First we check to see if there is any unread rx data.
   /// \bugid{426} claims we should send reset in this case.
@@ -1536,6 +1537,8 @@ TcpSocketBase::EnterRecovery ()
 
   NS_LOG_DEBUG (TcpSocketState::TcpCongStateName[m_tcb->m_congState] <<
                 " -> CA_RECOVERY");
+
+  m_tcb->m_cWndCnt = 0;
 
   if (!m_sackEnabled)
     {

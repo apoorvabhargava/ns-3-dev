@@ -128,9 +128,10 @@ TcpNewReno::SlowStart (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 
   if (segmentsAcked >= 1)
     {
-      tcb->m_cWnd += tcb->m_segmentSize;
+      uint32_t sndCwnd = tcb->m_cWnd;
+      tcb->m_cWnd = std::min ((sndCwnd + (segmentsAcked * tcb->m_segmentSize)), (uint32_t)tcb->m_ssThresh);
       NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->m_cWnd << " ssthresh " << tcb->m_ssThresh);
-      return segmentsAcked - 1;
+      return segmentsAcked - ((tcb->m_cWnd - sndCwnd) / tcb->m_segmentSize);
     }
 
   return 0;
@@ -150,13 +151,20 @@ TcpNewReno::CongestionAvoidance (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked
 {
   NS_LOG_FUNCTION (this << tcb << segmentsAcked);
 
-  if (segmentsAcked > 0)
+  uint32_t w = tcb->m_cWnd/tcb->m_segmentSize;
+  if (tcb->m_cWndCnt >= w)
     {
-      double adder = static_cast<double> (tcb->m_segmentSize * tcb->m_segmentSize) / tcb->m_cWnd.Get ();
-      adder = std::max (1.0, adder);
-      tcb->m_cWnd += static_cast<uint32_t> (adder);
-      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh);
+      tcb->m_cWndCnt = 0;
+      tcb->m_cWnd += tcb->m_segmentSize;
+    }
+
+  tcb->m_cWndCnt += segmentsAcked;
+  if (tcb->m_cWndCnt >= w)
+    {
+      uint32_t delta = tcb->m_cWndCnt / w;
+
+      tcb->m_cWndCnt -= delta * w;
+      tcb->m_cWnd += delta*tcb->m_segmentSize;
     }
 }
 

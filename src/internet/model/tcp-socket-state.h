@@ -128,6 +128,7 @@ public:
   TracedValue<uint32_t>  m_cWndInfl         {0}; //!< Inflated congestion window trace (used only for backward compatibility purpose)
   TracedValue<uint32_t>  m_ssThresh         {0}; //!< Slow start threshold
   uint32_t               m_initialCWnd      {0}; //!< Initial cWnd value
+  uint32_t               m_cWndCnt          {0}; //!< Linear increase counter
   uint32_t               m_initialSsThresh  {0}; //!< Initial Slow Start Threshold value
 
   // Segment
