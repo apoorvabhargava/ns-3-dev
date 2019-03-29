@@ -1248,6 +1248,7 @@ protected:
   SequenceNumber32       m_recover    {0};   //!< Previous highest Tx seqnum for fast recovery (set it to initial seq number)
   uint32_t               m_retxThresh {3};   //!< Fast Retransmit threshold
   bool                   m_limitedTx  {true}; //!< perform limited transmit
+  uint32_t               m_previousSackedBytes {0}; //!< total bytes SACKed by the previous ACK
 
   // Transmission Control Block
   Ptr<TcpSocketState>    m_tcb;               //!< Congestion control information

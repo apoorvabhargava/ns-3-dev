@@ -1570,7 +1570,7 @@ TcpSocketBase::EnterRecovery ()
   // compatibility with old ns-3 versions
   uint32_t bytesInFlight = m_sackEnabled ? BytesInFlight () : BytesInFlight () + m_tcb->m_segmentSize;
   m_tcb->m_ssThresh = m_congestionControl->GetSsThresh (m_tcb, bytesInFlight);
-  m_recoveryOps->EnterRecovery (m_tcb, m_dupAckCount, UnAckDataCount (), m_txBuffer->GetSacked ());
+  m_recoveryOps->EnterRecovery (m_tcb, m_dupAckCount, UnAckDataCount (), m_txBuffer->GetSacked () - m_previousSackedBytes);
 
   NS_LOG_INFO (m_dupAckCount << " dupack. Enter fast recovery mode." <<
                "Reset cwnd to " << m_tcb->m_cWnd << ", ssthresh to " <<
@@ -1628,7 +1628,7 @@ TcpSocketBase::DupAck ()
           // has left the network. This is equivalent to a SACK of one block.
           m_txBuffer->AddRenoSack ();
         }
-      m_recoveryOps->DoRecovery (m_tcb, 0, m_txBuffer->GetSacked ());
+      m_recoveryOps->DoRecovery (m_tcb, 0, m_txBuffer->GetSacked () - m_previousSackedBytes);
       NS_LOG_INFO (m_dupAckCount << " Dupack received in fast recovery mode."
                    "Increase cwnd to " << m_tcb->m_cWnd);
     }
@@ -1679,6 +1679,7 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
 
   NS_ASSERT (0 != (tcpHeader.GetFlags () & TcpHeader::ACK));
   NS_ASSERT (m_tcb->m_segmentSize > 0);
+  m_previousSackedBytes = m_txBuffer->GetSacked ();
 
   // RFC 6675, Section 5, 1st paragraph:
   // Upon the receipt of any ACK containing SACK information, the
@@ -1703,6 +1704,7 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
 
   // RFC 6675 Section 5: 2nd, 3rd paragraph and point (A), (B) implementation
   // are inside the function ProcessAck
+  BytesInFlight ();
   ProcessAck (ackNumber, scoreboardUpdated, oldHeadSequence);
 
   // If there is any data piggybacked, store it into m_rxBuffer

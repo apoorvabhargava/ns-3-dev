@@ -58,7 +58,6 @@ TcpPrrRecovery::TcpPrrRecovery (const TcpPrrRecovery& recovery)
     m_prrDelivered (recovery.m_prrDelivered),
     m_prrOut (recovery.m_prrOut),
     m_recoveryFlightSize (recovery.m_recoveryFlightSize),
-    m_previousSackedBytes (recovery.m_previousSackedBytes),
     m_reductionBoundMode (recovery.m_reductionBoundMode)
 {
   NS_LOG_FUNCTION (this);
@@ -79,7 +78,6 @@ TcpPrrRecovery::EnterRecovery (Ptr<TcpSocketState> tcb, uint32_t dupAckCount,
   m_prrOut = 0;
   m_prrDelivered = 0;
   m_recoveryFlightSize = unAckDataCount;
-  m_previousSackedBytes = lastSackedBytes;
 
   DoRecovery (tcb, 0, lastSackedBytes);
 }
@@ -90,9 +88,7 @@ TcpPrrRecovery::DoRecovery (Ptr<TcpSocketState> tcb, uint32_t lastAckedBytes,
 {
   NS_LOG_FUNCTION (this << tcb << lastAckedBytes << lastSackedBytes);
   uint32_t lastDeliveredBytes;
-  int changeInSackedBytes = int (lastSackedBytes - m_previousSackedBytes);
-  lastDeliveredBytes = lastAckedBytes + changeInSackedBytes > 0 ? lastAckedBytes + changeInSackedBytes : 0;
-  m_previousSackedBytes = lastSackedBytes;
+  lastDeliveredBytes = lastAckedBytes + lastSackedBytes > 0 ? lastAckedBytes + lastSackedBytes : 0;
   m_prrDelivered += lastDeliveredBytes;
 
   int sendCount;
