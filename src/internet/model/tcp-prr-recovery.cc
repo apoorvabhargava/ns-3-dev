@@ -78,6 +78,7 @@ TcpPrrRecovery::EnterRecovery (Ptr<TcpSocketState> tcb, uint32_t dupAckCount,
   m_prrOut = 0;
   m_prrDelivered = 0;
   m_recoveryFlightSize = unAckDataCount;
+  tcb->m_cWndPrior = tcb->m_cWnd;
 
   DoRecovery (tcb, 0, lastSackedBytes);
 }
@@ -94,24 +95,16 @@ TcpPrrRecovery::DoRecovery (Ptr<TcpSocketState> tcb, uint32_t lastAckedBytes,
   int sendCount;
   if (tcb->m_bytesInFlight > tcb->m_ssThresh)
     {
-      sendCount = std::ceil (m_prrDelivered * tcb->m_ssThresh * 1.0 / m_recoveryFlightSize) - m_prrOut;
+      uint64_t dividend = ((uint64_t)tcb->m_ssThresh/tcb->m_segmentSize)*(m_prrDelivered/tcb->m_segmentSize)+(tcb->m_cWndPrior/tcb->m_segmentSize) - 1;
+      sendCount = (dividend/(tcb->m_cWndPrior/tcb->m_segmentSize)) - (m_prrOut/tcb->m_segmentSize);
     }
   else
     {
-      int limit = static_cast<int> (tcb->m_ssThresh - tcb->m_bytesInFlight);
-      if (m_reductionBoundMode == CRB)
-        {
-          limit = m_prrDelivered - m_prrOut;
-        }
-      else if (m_reductionBoundMode == SSRB)
-        {
-          limit = std::max (m_prrDelivered - m_prrOut, lastDeliveredBytes) + tcb->m_segmentSize;
-        }
-      sendCount = std::min (limit, static_cast<int> (tcb->m_ssThresh - tcb->m_bytesInFlight));
+      sendCount = std::min(static_cast<int> (tcb->m_ssThresh - tcb->m_bytesInFlight)/tcb->m_segmentSize, static_cast<int> (lastDeliveredBytes)/tcb->m_segmentSize);
     }
 
   /* Force a fast retransmit upon entering fast recovery */
-  sendCount = std::max (sendCount, static_cast<int> (m_prrOut > 0 ? 0 : tcb->m_segmentSize));
+  sendCount = std::max (sendCount*((int)tcb->m_segmentSize), static_cast<int> (m_prrOut > 0 ? 0 : tcb->m_segmentSize));
   tcb->m_cWnd = tcb->m_bytesInFlight + sendCount;
   std::cout << "Updated cwnd in PRR = " << tcb->m_cWnd << std::endl;
   tcb->m_cWndInfl = tcb->m_cWnd;

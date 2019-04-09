@@ -130,6 +130,7 @@ public:
   uint32_t               m_initialCWnd      {0}; //!< Initial cWnd value
   uint32_t               m_cWndCnt          {0}; //!< Linear increase counter
   uint32_t               m_initialSsThresh  {0}; //!< Initial Slow Start Threshold value
+  uint32_t               m_cWndPrior        {0}; //Congestion window at start of Recovery
 
   // Segment
   uint32_t               m_segmentSize   {0}; //!< Segment size
