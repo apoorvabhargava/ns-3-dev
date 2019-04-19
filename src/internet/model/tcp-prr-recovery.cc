@@ -89,7 +89,7 @@ TcpPrrRecovery::DoRecovery (Ptr<TcpSocketState> tcb, uint32_t lastAckedBytes,
 {
   NS_LOG_FUNCTION (this << tcb << lastAckedBytes << lastSackedBytes);
   uint32_t lastDeliveredBytes;
-  lastDeliveredBytes = lastAckedBytes + lastSackedBytes > 0 ? lastAckedBytes + lastSackedBytes : 0;
+  lastDeliveredBytes = lastAckedBytes + lastSackedBytes;
   m_prrDelivered += lastDeliveredBytes;
 
   int sendCount;

@@ -1702,9 +1702,12 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
         }
     }
 
+  // Update bytes in flight before processing the ACK for proper calculation of congestion window
+  NS_LOG_INFO ("Update bytes in flight before processing the ACK.");
+  BytesInFlight ();
+
   // RFC 6675 Section 5: 2nd, 3rd paragraph and point (A), (B) implementation
   // are inside the function ProcessAck
-  BytesInFlight ();
   ProcessAck (ackNumber, scoreboardUpdated, oldHeadSequence);
 
   // If there is any data piggybacked, store it into m_rxBuffer
